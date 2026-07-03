@@ -1,40 +1,56 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kuis Interaktif untuk Siswa</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet" />
+
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js">
+    </script>
+
     <!-- Firebase v8 SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js">
+    </script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none; /* IE 10+ */
-            user-select: none; /* Standard syntax */
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
+
         .option-btn:disabled {
             cursor: not-allowed;
         }
-         .selected-answer {
-             background-color: #e0e7ff; /* Indigo 100 */
-             border-color: #6366f1; /* Indigo 500 */
-             font-weight: 500;
-             position: relative;
-         }
-         .selected-answer::after {
-             content: '✓';
-             position: absolute;
-             right: 1rem;
-             color: #6366f1;
-             font-weight: bold;
-         }
+
+        .selected-answer {
+            background-color: #e0e7ff;
+            border-color: #6366f1;
+            font-weight: 500;
+            position: relative;
+        }
+        .selected-answer::after {
+            content: '✓';
+            position: absolute;
+            right: 1rem;
+            color: #6366f1;
+            font-weight: bold;
+        }
+
         .loader {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #3b82f6;
@@ -45,61 +61,122 @@
             display: inline-block;
             margin-right: 10px;
         }
-        select:disabled, input:disabled {
+
+        select:disabled,
+        input:disabled {
             background-color: #e9ecef;
             cursor: not-allowed;
         }
-        #start-btn:disabled, #verify-code-btn:disabled, #next-btn:disabled {
-            background-color: #93c5fd; /* blue-300 */
+
+        #start-btn:disabled,
+        #verify-code-btn:disabled,
+        #next-btn:disabled {
+            background-color: #93c5fd;
             cursor: not-allowed;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
         }
-         #timer-display {
-             font-variant-numeric: tabular-nums;
-         }
-         /* Watermark Style */
-         #watermark-container {
-             position: fixed;
-             top: 0;
-             left: 0;
-             width: 100vw;
-             height: 100vh;
-             pointer-events: none; /* Allows clicking through the watermark */
-             z-index: 9999;
-             display: flex;
-             flex-wrap: wrap;
-             justify-content: space-around;
-             align-content: space-around;
-             opacity: 0.08; /* Very subtle transparency */
-             overflow: hidden;
-         }
-         .watermark-text {
-             transform: rotate(-30deg);
-             font-size: 14px;
-             font-weight: bold;
-             color: #000;
-             padding: 20px;
-             white-space: nowrap;
-         }
+
+        #timer-display {
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Watermark */
+        #watermark-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 9999;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            align-content: space-around;
+            opacity: 0.08;
+            overflow: hidden;
+        }
+        .watermark-text {
+            transform: rotate(-30deg);
+            font-size: 14px;
+            font-weight: bold;
+            color: #000;
+            padding: 20px;
+            white-space: nowrap;
+        }
+
+        /* Math rendering: ensure katex blocks don't break layout */
+        .katex-display {
+            margin: 0.5em 0 !important;
+            text-align: left !important;
+        }
+        .katex-display>.katex {
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .katex .base {
+            white-space: pre-wrap;
+        }
+
+        /* Question text with preserved whitespace and math */
+        #question-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* Option buttons with math */
+        .option-btn .katex-display {
+            margin: 0 !important;
+        }
+        .option-btn .katex-display>.katex {
+            display: inline-block;
+        }
+
+        /* Ensure options with math don't overflow */
+        .option-btn {
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        /* Better spacing for math in options */
+        .option-btn .katex {
+            font-size: 1.05em;
+        }
+
+        /* Fix for inline math in buttons */
+        .option-btn .katex .base {
+            white-space: pre-wrap;
+        }
+
+        /* Make sure rendered math is readable */
+        .katex .mathnormal {
+            font-style: italic;
+        }
     </style>
 </head>
+
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4 relative">
 
-    <!-- Watermark Container (Initially Hidden) -->
+    <!-- Watermark -->
     <div id="watermark-container" class="hidden"></div>
 
     <div id="quiz-container" class="w-full max-w-2xl lg:max-w-5xl bg-white rounded-2xl shadow-xl p-6 md:p-8 transition-all duration-500 relative z-10">
-        
-        <!-- Layar Awal -->
+
+        <!-- LAYAR AWAL -->
         <div id="start-screen">
             <h2 class="text-2xl font-bold text-gray-800 text-center mb-4">Selamat Datang di Kuis!</h2>
             <p class="text-center text-gray-600 mb-6">Silakan pilih kelas dan namamu untuk memulai.</p>
             <div id="data-loader" class="text-center text-gray-500">
                 <div class="loader inline-block"></div>
-                <p>Memuat data siswa & kode akses...</p>
+                <p>Memuat data siswa &amp; kode akses...</p>
             </div>
             <div id="student-form" class="hidden space-y-4">
                 <div>
@@ -108,16 +185,16 @@
                         <option value="">-- Pilih Kelas --</option>
                     </select>
                 </div>
-                <!-- Kode Akses Section -->
+                <!-- Kode Akses -->
                 <div id="access-code-section" class="hidden space-y-2">
-                     <label for="access-code-input" class="block text-sm font-medium text-gray-700">Masukkan Kode Akses Kelas</label>
-                     <div class="flex items-center gap-2">
-                         <input type="text" id="access-code-input" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Kode Akses">
-                         <button id="verify-code-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition">Verifikasi</button>
-                     </div>
-                     <p id="code-error" class="text-red-500 text-sm hidden">Kode akses salah!</p>
+                    <label for="access-code-input" class="block text-sm font-medium text-gray-700">Masukkan Kode Akses Kelas</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="access-code-input" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Kode Akses" />
+                        <button id="verify-code-btn" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition">Verifikasi</button>
+                    </div>
+                    <p id="code-error" class="text-red-500 text-sm hidden">Kode akses salah!</p>
                 </div>
-                 <!-- Nama Section -->
+                <!-- Nama -->
                 <div id="name-section" class="hidden">
                     <label for="student-name-select" class="block text-sm font-medium text-gray-700">Pilih Nama</label>
                     <select id="student-name-select" disabled class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
@@ -125,17 +202,17 @@
                     </select>
                 </div>
             </div>
-             <div id="form-error-container" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <div id="form-error-container" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
                 <p id="form-error" class="text-red-600 text-sm text-center font-medium">Harap pilih Kelas dan Nama!</p>
                 <p id="form-error-detail" class="text-red-500 text-xs mt-1 text-center break-words"></p>
-             </div>
-             <p id="attempt-error" class="text-yellow-600 text-sm mt-4 text-center hidden">Anda sudah pernah mengerjakan kuis ini.</p>
+            </div>
+            <p id="attempt-error" class="text-yellow-600 text-sm mt-4 text-center hidden">Anda sudah pernah mengerjakan kuis ini.</p>
             <button id="start-btn" disabled class="mt-6 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center justify-center">
                 Mulai Kuis
             </button>
         </div>
 
-        <!-- Layar Siap Memulai -->
+        <!-- LAYAR SIAP MEMULAI -->
         <div id="ready-screen" class="hidden text-center py-8">
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Kuis Siap Dimulai!</h2>
             <p id="ready-message" class="text-gray-600 mb-6">Soal telah berhasil dimuat. Klik tombol di bawah untuk memulai dalam mode layar penuh.</p>
@@ -143,40 +220,41 @@
                 Mulai Sekarang
             </button>
         </div>
-        
+
+        <!-- LAYAR KUIS -->
         <div id="quiz-content" class="hidden">
-            <!-- Header Kuis -->
-            <div id="quiz-header" class="mb-6 pb-4 border-b border-gray-200 flex justify-between items-center">
-                 <div>
+            <!-- Header -->
+            <div id="quiz-header" class="mb-6 pb-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-2">
+                <div>
                     <h1 id="quiz-title" class="text-xl md:text-2xl font-bold text-gray-800">Bagian Pilihan Ganda</h1>
                     <p id="progress-text" class="font-semibold text-sm text-gray-600"></p>
                     <p id="mcma-hint" class="text-xs text-blue-600 font-medium hidden mt-1">⚠️ Pilih lebih dari satu jawaban</p>
-                 </div>
-                 <div id="timer-display" class="hidden text-right font-semibold text-lg text-red-600">
-                     Sisa Waktu: <span id="time-left">00:00</span>
-                 </div>
+                </div>
+                <div id="timer-display" class="hidden text-right font-semibold text-lg text-red-600">
+                    Sisa Waktu: <span id="time-left">00:00</span>
+                </div>
             </div>
 
             <!-- Konten Pertanyaan -->
             <div id="question-area">
-                <img id="question-image" src="" alt="Gambar Soal" class="max-w-full h-auto mx-auto mb-4 rounded-lg hidden">
-                <h2 id="question-text" class="text-lg md:text-xl font-semibold text-gray-700 mb-5" style="white-space: pre-wrap;">Memuat pertanyaan...</h2>
+                <img id="question-image" src="" alt="Gambar Soal" class="max-w-full h-auto mx-auto mb-4 rounded-lg hidden" />
+                <div id="question-text" class="text-lg md:text-xl font-semibold text-gray-700 mb-5"></div>
                 <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
                 <div id="uraian-answer-area" class="hidden">
                     <label for="uraian-answer" class="block text-sm font-medium text-gray-700 mb-2">Jawaban Anda:</label>
                     <textarea id="uraian-answer" rows="5" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"></textarea>
                 </div>
             </div>
-            
+
             <!-- Tombol Navigasi -->
             <div class="mt-8 text-right">
                 <button id="next-btn" disabled class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-transform transform hover:scale-105">
-                    Soal Berikutnya <!-- Text will change -->
+                    Soal Berikutnya
                 </button>
             </div>
         </div>
-        
-        <!-- Layar Konfirmasi Uraian -->
+
+        <!-- LAYAR KONFIRMASI URAIAN -->
         <div id="confirmation-screen" class="hidden text-center py-8">
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Bagian Pilihan Ganda Selesai!</h2>
             <p class="text-gray-600 mb-6">Kuis ini juga memiliki soal uraian. Apakah Anda ingin melanjutkan?</p>
@@ -186,25 +264,25 @@
             </div>
         </div>
 
-        <!-- Layar Hasil Akhir -->
+        <!-- LAYAR HASIL -->
         <div id="results-screen" class="hidden text-center py-8">
             <h2 class="text-3xl font-bold text-gray-800 mb-2">Kuis Selesai!</h2>
             <p class="text-gray-600 mb-6">Kamu telah menyelesaikan kuis.</p>
             <div class="bg-blue-50 p-6 rounded-xl inline-block space-y-3">
                 <p class="text-lg">Jumlah Jawaban Benar:</p>
                 <p id="correct-count" class="text-4xl font-bold text-green-600">0</p>
-                 <p class="text-lg pt-2 border-t">Jumlah Jawaban Salah:</p>
+                <p class="text-lg pt-2 border-t">Jumlah Jawaban Salah:</p>
                 <p id="wrong-count" class="text-4xl font-bold text-red-600">0</p>
             </div>
-             <p id="saving-status-pg" class="text-gray-500 text-sm mt-4 flex items-center justify-center">&nbsp;</p>
-             <p id="saving-status-uraian" class="text-gray-500 text-sm mt-2 flex items-center justify-center">&nbsp;</p>
+            <p id="saving-status-pg" class="text-gray-500 text-sm mt-4 flex items-center justify-center">&nbsp;</p>
+            <p id="saving-status-uraian" class="text-gray-500 text-sm mt-2 flex items-center justify-center">&nbsp;</p>
             <button id="restart-btn" class="mt-8 w-full md:w-auto bg-gray-800 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-900 transition-all">
                 Coba Lagi
             </button>
         </div>
     </div>
 
-    <!-- Layar Peringatan Keluar Fokus -->
+    <!-- LAYAR PERINGATAN KELUAR FOKUS -->
     <div id="focus-warning-screen" class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md">
             <h2 class="text-2xl font-bold text-yellow-500 mb-4">Peringatan!</h2>
@@ -217,36 +295,45 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx538SLDgPtIvQRWnZP3Hn2PygRrXSC5l6uGCsoDfQAE6rP2QksRLKKEjzylm-vsPKcDA/exec";
-        const STUDENT_DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1LPXmfGQ5WLRY0nqdU-pPqmdQpQdY5KTcLACYMYmdZ-GW_mMDsYhA1cAb0WZsWo5QJwcqVnUgZUgA/pub?gid=839083232&single=true&output=csv";
-        const ACCESS_CODE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1LPXmfGQ5WLRY0nqdU-pPqmdQpQdY5KTcLACYMYmdZ-GW_mMDsYhA1cAb0WZsWo5QJwcqVnUgZUgA/pub?gid=669806646&single=true&output=csv";
-        
+        // ============================================================
+        // KONFIGURASI
+        // ============================================================
+        const SCRIPT_URL =
+            "https://script.google.com/macros/s/AKfycbx538SLDgPtIvQRWnZP3Hn2PygRrXSC5l6uGCsoDfQAE6rP2QksRLKKEjzylm-vsPKcDA/exec";
+        const STUDENT_DATA_URL =
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1LPXmfGQ5WLRY0nqdU-pPqmdQpQdY5KTcLACYMYmdZ-GW_mMDsYhA1cAb0WZsWo5QJwcqVnUgZUgA/pub?gid=839083232&single=true&output=csv";
+        const ACCESS_CODE_URL =
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1LPXmfGQ5WLRY0nqdU-pPqmdQpQdY5KTcLACYMYmdZ-GW_mMDsYhA1cAb0WZsWo5QJwcqVnUgZUgA/pub?gid=669806646&single=true&output=csv";
+
         const firebaseConfig = {
-          apiKey: "AIzaSyBDIBFVUDSxN4Qs9HsHzvVac3NCTXBkDIg",
-          authDomain: "projek-kuis-42454.firebaseapp.com",
-          projectId: "projek-kuis-42454",
-          storageBucket: "projek-kuis-42454.appspot.com",
-          messagingSenderId: "230493914497",
-          appId: "1:230493914497:web:5ea60af2c77e8f2bcd1480"
+            apiKey: "AIzaSyBDIBFVUDSxN4Qs9HsHzvVac3NCTXBkDIg",
+            authDomain: "projek-kuis-42454.firebaseapp.com",
+            projectId: "projek-kuis-42454",
+            storageBucket: "projek-kuis-42454.appspot.com",
+            messagingSenderId: "230493914497",
+            appId: "1:230493914497:web:5ea60af2c77e8f2bcd1480"
         };
-        
+
         const quizDataUrls = {
             'X': "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1LPXmfGQ5WLRY0nqdU-pPqmdQpQdY5KTcLACYMYmdZ-GW_mMDsYhA1cAb0WZsWo5QJwcqVnUgZUgA/pub?gid=586568774&single=true&output=csv",
             'XI': "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1LPXmfGQ5WLRY0nqdU-pPqmdQpQdY5KTcLACYMYmdZ-GW_mMDsYhA1cAb0WZsWo5QJwcqVnUgZUgA/pub?gid=397565300&single=true&output=csv",
             'XII': "https://docs.google.com/spreadsheets/d/e/2PACX-1vS1LPXmfGQ5WLRY0nqdU-pPqmdQpQdY5KTcLACYMYmdZ-GW_mMDsYhA1cAb0WZsWo5QJwcqVnUgZUgA/pub?gid=183515394&single=true&output=csv"
         };
 
+        // ============================================================
+        // STATE
+        // ============================================================
         let db;
-        let sessionStatusUnsubscribe = null; 
-        let allPilihanGandaQuestions = []; 
+        let sessionStatusUnsubscribe = null;
+        let allPilihanGandaQuestions = [];
         let allUraianQuestions = [];
-        let pilihanGandaQuestions = []; 
+        let pilihanGandaQuestions = [];
         let uraianQuestions = [];
         let uraianAnswers = [];
-        let quizConfig = { numQuestions: null, shuffle: false, useTimer: false, timerDuration: null }; 
-        let accessCodes = {}; 
+        let quizConfig = { numQuestions: null, shuffle: false, useTimer: false, timerDuration: null };
+        let accessCodes = {};
 
-        // --- Elemen DOM ---
+        // DOM refs
         const startScreen = document.getElementById('start-screen');
         const dataLoader = document.getElementById('data-loader');
         const studentForm = document.getElementById('student-form');
@@ -260,14 +347,14 @@
         const formErrorContainer = document.getElementById('form-error-container');
         const formError = document.getElementById('form-error');
         const formErrorDetail = document.getElementById('form-error-detail');
-        const attemptError = document.getElementById('attempt-error'); 
+        const attemptError = document.getElementById('attempt-error');
         const startBtn = document.getElementById('start-btn');
         const readyScreen = document.getElementById('ready-screen');
         const readyMessage = document.getElementById('ready-message');
         const startFullscreenBtn = document.getElementById('start-fullscreen-btn');
         const quizContent = document.getElementById('quiz-content');
         const quizTitle = document.getElementById('quiz-title');
-        const mcmaHint = document.getElementById('mcma-hint'); 
+        const mcmaHint = document.getElementById('mcma-hint');
         const timerDisplay = document.getElementById('timer-display');
         const timeLeftEl = document.getElementById('time-left');
         const questionImage = document.getElementById('question-image');
@@ -289,32 +376,33 @@
         const resumeQuizBtn = document.getElementById('resume-quiz-btn');
         const countdownTimerEl = document.getElementById('countdown-timer');
         const watermarkContainer = document.getElementById('watermark-container');
-        
-        // --- Variabel Status Kuis ---
+
+        // Status kuis
         let currentQuestionIndex = 0;
-        let score = 0; 
-        let currentSelectedAnswers = []; 
+        let score = 0;
+        let currentSelectedAnswers = [];
         let studentName = "";
         let studentClass = "";
-        let studentId = ""; 
+        let studentId = "";
         let studentData = {};
         let currentQuizSection = 'pilihanGanda';
         let isQuizActive = false;
-        let isCodeVerified = false; 
-        let isSubmitting = false; 
+        let isCodeVerified = false;
+        let isSubmitting = false;
         let countdownInterval = null;
         let countdownValue = 10;
         let quizTimerInterval = null;
-        let quizTimeRemaining = 0; 
+        let quizTimeRemaining = 0;
+        let isRenderingMath = false;
 
-        // --- Helper Function: Robust CSV Parsing ---
+        // ============================================================
+        // FUNGSI BANTU
+        // ============================================================
         const parseCSV = (text, separator = ',') => {
             const cleanText = text.trim().replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
             const lines = cleanText.split('\n');
-            
             if (lines.length < 1) return { headers: [], data: [] };
 
-            // Header Detection (First 10 lines)
             let headerIndex = -1;
             let headers = [];
             const headerKeywords = ['soal', 'pertanyaan', 'question', 'no'];
@@ -330,25 +418,22 @@
             }
 
             if (headerIndex === -1) {
-                console.warn("Header otomatis tidak ditemukan, menggunakan baris pertama.");
                 headerIndex = 0;
                 headers = lines[0].split(separator).map(h => h.trim().replace(/^"|"$/g, ''));
             }
 
             const results = [];
             const regexParser = new RegExp(`(?:"([^"]*(?:""[^"]*)*)"|([^${separator}]*))(${separator}|$)`, 'g');
-            
             let currentLine = "";
-            
+
             for (let i = headerIndex + 1; i < lines.length; i++) {
                 let line = lines[i];
                 if (currentLine) {
-                     currentLine += "\n" + line;
+                    currentLine += "\n" + line;
                 } else {
-                     currentLine = line;
+                    currentLine = line;
                 }
-                
-                let quoteCount = (currentLine.match(/"/g) || []).length;
+                const quoteCount = (currentLine.match(/"/g) || []).length;
                 if (quoteCount % 2 === 0) {
                     const columns = [];
                     let match;
@@ -358,32 +443,27 @@
                         columns.push(value ? value.trim() : '');
                         if (match[3] === '') break;
                     }
-                    // Remove the last empty match created by the regex if line ends with separator
                     if (currentLine.endsWith(separator)) {
-                         columns.push('');
+                        columns.push('');
                     }
-                    
                     if (columns.length > 0 && columns.some(c => c !== '')) {
                         results.push(columns);
                     }
-                    currentLine = ""; 
+                    currentLine = "";
                 }
             }
-
             return { headers, data: results };
         };
 
-        // --- Watermark Function ---
+        // ============================================================
+        // WATERMARK
+        // ============================================================
         function createWatermark() {
             const watermarkText = `${studentName}\n${studentClass}`;
-            watermarkContainer.innerHTML = ''; // Clear existing
+            watermarkContainer.innerHTML = '';
             watermarkContainer.classList.remove('hidden');
-
-            // Create enough repeated text elements to fill the screen
-            // Estimate number based on screen size
-            const cols = 5; 
+            const cols = 5;
             const rows = 8;
-
             for (let i = 0; i < cols * rows; i++) {
                 const div = document.createElement('div');
                 div.classList.add('watermark-text');
@@ -392,52 +472,42 @@
             }
         }
 
-        // --- Sound Function ---
+        // ============================================================
+        // SUARA PERINGATAN
+        // ============================================================
         function playWarningSound() {
-            // Menggunakan Web Audio API untuk membuat suara beep/sirine tanpa file eksternal
             try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioCtx = new(window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
-
-                oscillator.type = 'sawtooth'; // Jenis gelombang suara (tajam, seperti alarm)
-                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime); // Mulai di nada A4
-                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // Naik ke A5 (efek sirine)
-                
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // Volume rendah
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5); // Fade out
-
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.5); // Bunyi selama 0.5 detik
-            } catch (e) {
-                console.warn("Gagal memutar suara peringatan:", e);
-            }
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } catch (_) { /* ignore */ }
         }
 
-        // --- Fungsi untuk Fullscreen & Anti-Curang ---
+        // ============================================================
+        // FULLSCREEN & ANTI-CURANG
+        // ============================================================
         function enterFullscreen() {
-             try {
+            try {
                 const elem = document.documentElement;
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen().catch(() => {});
-                } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
-                } else if (elem.msRequestFullscreen) {
-                    elem.msRequestFullscreen();
-                }
-            } catch (e) {
-                console.warn("Fullscreen API tidak didukung atau diblokir.");
-            }
+                if (elem.requestFullscreen) elem.requestFullscreen().catch(() => {});
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+                else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+            } catch (_) { /* ignore */ }
         }
 
         async function handleVisibilityChange() {
-             if (!isQuizActive) return;
-
+            if (!isQuizActive) return;
             if (document.visibilityState === 'hidden') {
-                playWarningSound(); // Mainkan suara peringatan
+                playWarningSound();
                 pauseQuizAndStartCountdown();
                 try {
                     await db.collection('quiz_sessions').doc(studentId).set({ status: 'Beralih Tab' }, { merge: true });
@@ -447,91 +517,115 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                         examType: 'Sesi Pengerjaan Kuis'
                     });
-                } catch (error) {
-                    console.error("Gagal mengupdate status siswa:", error);
-                }
+                } catch (_) { /* ignore */ }
             } else if (document.visibilityState === 'visible' && countdownInterval) {
-                 clearInterval(countdownInterval);
-                 countdownInterval = null;
-                 focusWarningScreen.classList.add('hidden');
-                 try {
-                     await db.collection('quiz_sessions').doc(studentId).set({ status: 'Mengerjakan' }, { merge: true });
-                 } catch (error) {
-                      console.error("Gagal mengupdate status siswa:", error);
-                 }
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                focusWarningScreen.classList.add('hidden');
+                try {
+                    await db.collection('quiz_sessions').doc(studentId).set({ status: 'Mengerjakan' }, { merge: true });
+                } catch (_) { /* ignore */ }
             }
         }
 
         function handleFullscreenChange() {
             if (!document.fullscreenElement && isQuizActive) {
-                playWarningSound(); // Mainkan suara peringatan
+                playWarningSound();
                 pauseQuizAndStartCountdown();
             }
         }
 
         function pauseQuizAndStartCountdown() {
-            if (!isQuizActive || countdownInterval) return; 
-
+            if (!isQuizActive || countdownInterval) return;
             focusWarningScreen.classList.remove('hidden');
             countdownValue = 10;
             countdownTimerEl.textContent = `Waktu tersisa: ${countdownValue} detik`;
-
             countdownInterval = setInterval(() => {
                 countdownValue--;
                 countdownTimerEl.textContent = `Waktu tersisa: ${countdownValue} detik`;
                 if (countdownValue <= 0) {
-                    clearInterval(countdownInterval); 
+                    clearInterval(countdownInterval);
                     countdownInterval = null;
-                    showResults(); 
+                    showResults();
                 }
             }, 1000);
         }
-        
-         // --- Fungsi Timer Kuis ---
-         function startQuizTimer(durationMinutes) {
-             quizTimeRemaining = durationMinutes * 60;
-             timerDisplay.classList.remove('hidden');
-             updateTimerDisplay();
 
-             quizTimerInterval = setInterval(() => {
-                 quizTimeRemaining--;
-                 updateTimerDisplay();
-                 if (quizTimeRemaining <= 0) {
-                     clearInterval(quizTimerInterval); 
-                     quizTimerInterval = null;
-                     showResults(); 
-                 }
-             }, 1000);
-         }
+        // ============================================================
+        // TIMER KUIS
+        // ============================================================
+        function startQuizTimer(durationMinutes) {
+            quizTimeRemaining = durationMinutes * 60;
+            timerDisplay.classList.remove('hidden');
+            updateTimerDisplay();
+            quizTimerInterval = setInterval(() => {
+                quizTimeRemaining--;
+                updateTimerDisplay();
+                if (quizTimeRemaining <= 0) {
+                    clearInterval(quizTimerInterval);
+                    quizTimerInterval = null;
+                    showResults();
+                }
+            }, 1000);
+        }
 
-         function updateTimerDisplay() {
-             const minutes = Math.floor(quizTimeRemaining / 60);
-             const seconds = quizTimeRemaining % 60;
-             timeLeftEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-         }
+        function updateTimerDisplay() {
+            const m = Math.floor(quizTimeRemaining / 60);
+            const s = quizTimeRemaining % 60;
+            timeLeftEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
 
-         // --- Listen to Force End Signal ---
-         function listenForceEndSignal() {
-             const docRef = db.collection('quiz_controls').doc('session_status');
-             
-             sessionStatusUnsubscribe = docRef.onSnapshot((doc) => {
-                 if (isQuizActive && doc.exists && doc.data().forceEnd === true) {
-                     console.log("Sinyal paksa akhir diterima!");
-                     showResults(); 
-                 }
-             }, (error) => {
-                 console.error("Gagal mendengarkan sinyal paksa akhir:", error);
-             });
-         }
+        // ============================================================
+        // LISTENER FORCE END
+        // ============================================================
+        function listenForceEndSignal() {
+            const docRef = db.collection('quiz_controls').doc('session_status');
+            sessionStatusUnsubscribe = docRef.onSnapshot((doc) => {
+                if (isQuizActive && doc.exists && doc.data().forceEnd === true) {
+                    showResults();
+                }
+            }, () => {});
+        }
 
-        // --- Fungsi-fungsi Kuis Lainnya ---
+        // ============================================================
+        // RENDER MATEMATIKA DENGAN KaTeX
+        // ============================================================
+        function renderMathInContainer(container) {
+            if (isRenderingMath) return;
+            if (!container) return;
+            if (typeof renderMathInElement !== 'function') {
+                // KaTeX auto-render belum siap – tunggu sebentar lalu coba lagi
+                setTimeout(() => renderMathInContainer(container), 200);
+                return;
+            }
+            try {
+                isRenderingMath = true;
+                renderMathInElement(container, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '\\[', right: '\\]', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\\(', right: '\\)', display: false }
+                    ],
+                    throwOnError: false,
+                    errorColor: '#cc0000'
+                });
+            } catch (e) {
+                console.warn('Math rendering error:', e);
+            } finally {
+                isRenderingMath = false;
+            }
+        }
+
+        // ============================================================
+        // FETCH DATA AWAL
+        // ============================================================
         async function fetchInitialData() {
-             try {
+            try {
                 const [studentRes, codeRes] = await Promise.all([
                     fetch(STUDENT_DATA_URL),
                     fetch(ACCESS_CODE_URL)
                 ]);
-
                 if (!studentRes.ok) throw new Error('Gagal mengambil data siswa');
                 if (!codeRes.ok) throw new Error('Gagal mengambil data kode akses');
 
@@ -540,89 +634,77 @@
                 if (studentParsed.headers.length <= 1 && studentCsvText.indexOf(';') > -1) {
                     studentParsed = parseCSV(studentCsvText, ';');
                 }
-
                 const studentHeaders = studentParsed.headers;
                 const studentRows = studentParsed.data;
-
-                studentHeaders.forEach(header => { if(header) studentData[header] = []; });
+                studentHeaders.forEach(h => { if (h) studentData[h] = []; });
                 studentRows.forEach(row => {
-                     studentHeaders.forEach((header, index) => {
-                         if(row[index]) studentData[header].push(row[index]);
-                     });
+                    studentHeaders.forEach((h, idx) => {
+                        if (row[idx]) studentData[h].push(row[idx]);
+                    });
                 });
                 populateClassDropdown();
 
                 let codeCsvText = await codeRes.text();
                 let codeParsed = parseCSV(codeCsvText, ',');
-                 if (codeParsed.headers.length <= 1 && codeCsvText.indexOf(';') > -1) {
+                if (codeParsed.headers.length <= 1 && codeCsvText.indexOf(';') > -1) {
                     codeParsed = parseCSV(codeCsvText, ';');
                 }
-                
                 const codeHeaders = codeParsed.headers;
                 const codeRows = codeParsed.data;
-
                 if (codeRows.length > 0) {
-                    const codes = codeRows[0]; 
-                    codeHeaders.forEach((header, index) => {
-                        if (header) {
-                            accessCodes[header] = codes[index] ? codes[index].trim() : ""; 
-                        }
+                    const codes = codeRows[0];
+                    codeHeaders.forEach((h, idx) => {
+                        if (h) accessCodes[h] = codes[idx] ? codes[idx].trim() : "";
                     });
                 }
-                console.log("Kode Akses Dimuat:", accessCodes); 
-
-             } catch (error) {
-                 console.error("Error during initialization:", error);
-                 dataLoader.innerHTML = `<p class="text-red-500">Gagal memuat data awal. Coba muat ulang halaman.</p>`;
-             } finally {
-                 dataLoader.classList.add('hidden');
-                 studentForm.classList.remove('hidden');
-             }
+            } catch (error) {
+                console.error('Init error:', error);
+                dataLoader.innerHTML = `<p class="text-red-500">Gagal memuat data awal. Coba muat ulang halaman.</p>`;
+            } finally {
+                dataLoader.classList.add('hidden');
+                studentForm.classList.remove('hidden');
+            }
         }
 
-
+        // ============================================================
+        // FETCH & PARSE SOAL
+        // ============================================================
         async function fetchAndParseQuizData(url) {
             allPilihanGandaQuestions = [];
             allUraianQuestions = [];
-            
+
             const response = await fetch(url);
             if (!response.ok) throw new Error('Gagal mengambil data kuis');
             const csvText = await response.text();
-            
-            // Auto-detect separator
+
             let separator = ',';
             if (csvText.indexOf(';') > -1 && (csvText.match(/;/g) || []).length > (csvText.match(/,/g) || []).length) {
                 separator = ';';
             }
-            
+
             const parsed = parseCSV(csvText, separator);
             const headers = parsed.headers.map(h => h.trim());
             const rows = parsed.data;
-            
+
             const getColVal = (cols, keyName) => {
-                const index = headers.findIndex(h => h.toLowerCase() === keyName.toLowerCase());
-                return index !== -1 ? cols[index] : undefined;
+                const idx = headers.findIndex(h => h.toLowerCase() === keyName.toLowerCase());
+                return idx !== -1 ? cols[idx] : undefined;
             };
 
-            console.log(`Parsed ${rows.length} rows from CSV using separator '${separator}'`);
+            for (const cols of rows) {
+                if (!cols || cols.length === 0) continue;
 
-            for (const columns of rows) {
-                if (!columns || columns.length === 0) continue; 
-                
-                let questionContent = getColVal(columns, 'Soal');
-                if (!questionContent) questionContent = getColVal(columns, 'Pertanyaan');
-                if (!questionContent) questionContent = getColVal(columns, 'Question');
-                
+                let questionContent = getColVal(cols, 'Soal') || getColVal(cols, 'Pertanyaan') || getColVal(cols, 'Question');
                 if (!questionContent || questionContent.length === 0) continue;
 
-                const jenisSoal = (getColVal(columns, 'Jenis Soal') || getColVal(columns, 'Tipe') || 'Pilihan Ganda').trim();
-                const rawKey = getColVal(columns, 'Kunci Jawaban') || getColVal(columns, 'Kunci') || '';
-                const no = getColVal(columns, 'No') || '';
-                const linkGambar = getColVal(columns, 'Link Gambar') || getColVal(columns, 'Gambar') || '';
-                const pembahasan = getColVal(columns, 'Pembahasan') || '';
-                
+                const jenisSoal = (getColVal(cols, 'Jenis Soal') || getColVal(cols, 'Tipe') || 'Pilihan Ganda').trim();
+                const rawKey = getColVal(cols, 'Kunci Jawaban') || getColVal(cols, 'Kunci') || '';
+                const no = getColVal(cols, 'No') || '';
+                const linkGambar = getColVal(cols, 'Link Gambar') || getColVal(cols, 'Gambar') || '';
+                const pembahasan = getColVal(cols, 'Pembahasan') || '';
+
                 const questionObj = {
-                    no: no, 
+                    no: no,
                     question: questionContent,
                     linkGambar: linkGambar,
                     correctKeys: rawKey.split(',').map(k => k.trim().toUpperCase())
@@ -630,130 +712,129 @@
 
                 if (jenisSoal.toLowerCase().includes('ganda') || jenisSoal === 'MCMA') {
                     questionObj.isMCMA = (jenisSoal === 'MCMA' || jenisSoal.toLowerCase().includes('kompleks'));
-                    
                     const optionKeys = ['Opsi A', 'Opsi B', 'Opsi C', 'Opsi D', 'Opsi E'];
-                    const options = optionKeys
-                        .map(key => getColVal(columns, key))
-                        .filter(opt => opt && opt.length > 0);
-                    
+                    const options = optionKeys.map(key => getColVal(cols, key)).filter(opt => opt && opt.length > 0);
                     questionObj.optionMap = {};
-                    ['A','B','C','D','E'].forEach((label, idx) => {
-                        if(options[idx]) questionObj.optionMap[label] = options[idx];
+                    ['A', 'B', 'C', 'D', 'E'].forEach((label, idx) => {
+                        if (options[idx]) questionObj.optionMap[label] = options[idx];
                     });
-
-                    Object.assign(questionObj, { 
-                        options: options, 
-                        explanation: pembahasan, 
-                        clue: "Periksa kembali setiap opsi dengan teliti." 
+                    Object.assign(questionObj, {
+                        options: options,
+                        explanation: pembahasan,
+                        clue: "Periksa kembali setiap opsi dengan teliti."
                     });
-                    allPilihanGandaQuestions.push(questionObj); 
+                    allPilihanGandaQuestions.push(questionObj);
                 } else if (jenisSoal.toLowerCase().includes('uraian') || jenisSoal.toLowerCase().includes('essay')) {
-                    allUraianQuestions.push(questionObj); 
+                    allUraianQuestions.push(questionObj);
                 }
             }
-             console.log(`Loaded ${allPilihanGandaQuestions.length} PG questions and ${allUraianQuestions.length} Essay questions.`);
         }
-        
-         function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-         }
 
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        // ============================================================
+        // DROPDOWN
+        // ============================================================
         function populateClassDropdown() {
-            Object.keys(studentData).sort().forEach(className => { 
-                const option = document.createElement('option');
-                option.value = className;
-                option.textContent = className;
-                studentClassSelect.appendChild(option);
+            Object.keys(studentData).sort().forEach(className => {
+                const opt = document.createElement('option');
+                opt.value = className;
+                opt.textContent = className;
+                studentClassSelect.appendChild(opt);
             });
         }
-        
+
         function populateNameDropdown(selectedClass) {
             studentNameSelect.innerHTML = '<option value="">-- Pilih Nama --</option>';
             if (selectedClass && studentData[selectedClass]) {
                 studentData[selectedClass].sort().forEach(name => {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    option.textContent = name;
-                    studentNameSelect.appendChild(option);
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    studentNameSelect.appendChild(opt);
                 });
                 studentNameSelect.disabled = false;
             } else {
                 studentNameSelect.disabled = true;
             }
-             attemptError.classList.add('hidden'); 
-             startBtn.disabled = true; 
+            attemptError.classList.add('hidden');
+            startBtn.disabled = true;
         }
 
+        // ============================================================
+        // FIREBASE: CEK & REKAM ATTEMPT
+        // ============================================================
         async function checkExistingAttempt() {
             if (!studentId) return false;
             try {
-                const attemptDoc = await db.collection('quiz_attempts').doc(studentId).get();
-                return attemptDoc.exists;
-            } catch (error) {
-                console.error("Error checking attempt:", error);
-                return false; 
-            }
+                const doc = await db.collection('quiz_attempts').doc(studentId).get();
+                return doc.exists;
+            } catch (_) { return false; }
         }
 
         async function recordAttempt() {
-             if (!studentId) return;
-             try {
+            if (!studentId) return;
+            try {
                 await db.collection('quiz_attempts').doc(studentId).set({
-                     completedAt: firebase.firestore.FieldValue.serverTimestamp()
-                 });
-             } catch (error) {
-                 console.error("Error recording attempt:", error);
-             }
+                    completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (_) { /* ignore */ }
         }
 
-
+        // ============================================================
+        // INIT / RESET KUIS
+        // ============================================================
         function initQuiz() {
             currentQuestionIndex = 0;
             score = 0;
             isQuizActive = false;
-            isCodeVerified = false; 
-            isSubmitting = false; 
+            isCodeVerified = false;
+            isSubmitting = false;
             pilihanGandaQuestions = [];
             uraianQuestions = [];
             uraianAnswers = [];
-            currentSelectedAnswers = []; // Reset
+            currentSelectedAnswers = [];
             currentQuizSection = 'pilihanGanda';
             resultsScreen.classList.add('hidden');
             quizContent.classList.add('hidden');
             confirmationScreen.classList.add('hidden');
             readyScreen.classList.add('hidden');
             startScreen.classList.remove('hidden');
-            accessCodeSection.classList.add('hidden'); 
-            nameSection.classList.add('hidden'); 
-            accessCodeInput.value = ''; 
+            accessCodeSection.classList.add('hidden');
+            nameSection.classList.add('hidden');
+            accessCodeInput.value = '';
             codeError.classList.add('hidden');
             attemptError.classList.add('hidden');
             formErrorContainer.classList.add('hidden');
-            startBtn.disabled = true; 
-            timerDisplay.classList.add('hidden'); 
-            if (quizTimerInterval) clearInterval(quizTimerInterval); 
+            startBtn.disabled = true;
+            timerDisplay.classList.add('hidden');
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
             quizTimerInterval = null;
-            if (countdownInterval) clearInterval(countdownInterval); 
+            if (countdownInterval) clearInterval(countdownInterval);
             countdownInterval = null;
             if (sessionStatusUnsubscribe) {
-                 sessionStatusUnsubscribe();
-                 sessionStatusUnsubscribe = null;
+                sessionStatusUnsubscribe();
+                sessionStatusUnsubscribe = null;
             }
-
-            if (studentClassSelect.options.length > 1) { 
-                 studentClassSelect.value = '';
-                 populateNameDropdown(''); 
+            if (studentClassSelect.options.length > 1) {
+                studentClassSelect.value = '';
+                populateNameDropdown('');
             }
         }
-        
+
+        // ============================================================
+        // START KUIS
+        // ============================================================
         async function startQuiz() {
             studentClass = studentClassSelect.value;
             studentName = studentNameSelect.value;
-            
-            if (!studentClass || !studentName || !isCodeVerified) { 
+
+            if (!studentClass || !studentName || !isCodeVerified) {
                 formError.textContent = "Harap pilih Kelas, verifikasi Kode Akses, dan pilih Nama!";
                 formErrorContainer.classList.remove('hidden');
                 return;
@@ -767,9 +848,9 @@
             const hasAttempted = await checkExistingAttempt();
             if (hasAttempted) {
                 attemptError.classList.remove('hidden');
-                startBtn.disabled = true; 
-                startBtn.innerHTML = 'Mulai Kuis'; 
-                return; 
+                startBtn.disabled = true;
+                startBtn.innerHTML = 'Mulai Kuis';
+                return;
             }
 
             let classLevel = '';
@@ -779,13 +860,9 @@
 
             try {
                 const configDoc = await db.collection('quiz_configs').doc(classLevel).get();
-                if (configDoc.exists) {
-                    quizConfig = configDoc.data();
-                } else {
-                    quizConfig = { numQuestions: null, shuffle: false, useTimer: false, timerDuration: null };
-                }
-            } catch (error) {
-                console.error("Gagal memuat konfigurasi kuis, menggunakan default:", error);
+                quizConfig = configDoc.exists ? configDoc.data() : { numQuestions: null, shuffle: false, useTimer: false,
+                    timerDuration: null };
+            } catch (_) {
                 quizConfig = { numQuestions: null, shuffle: false, useTimer: false, timerDuration: null };
             }
 
@@ -805,395 +882,409 @@
                     shuffleArray(allPilihanGandaQuestions);
                     shuffleArray(allUraianQuestions);
                 }
-                
-                pilihanGandaQuestions = allPilihanGandaQuestions.slice(); 
+
+                pilihanGandaQuestions = allPilihanGandaQuestions.slice();
                 uraianQuestions = allUraianQuestions.slice();
 
                 if (quizConfig.numQuestions && quizConfig.numQuestions > 0) {
                     if (quizConfig.numQuestions <= pilihanGandaQuestions.length) {
                         pilihanGandaQuestions = pilihanGandaQuestions.slice(0, quizConfig.numQuestions);
-                        uraianQuestions = []; 
+                        uraianQuestions = [];
                     } else {
-                        const remainingSlots = quizConfig.numQuestions - pilihanGandaQuestions.length;
-                        uraianQuestions = uraianQuestions.slice(0, remainingSlots);
+                        const remaining = quizConfig.numQuestions - pilihanGandaQuestions.length;
+                        uraianQuestions = uraianQuestions.slice(0, remaining);
                     }
                 }
-                
+
                 if (pilihanGandaQuestions.length === 0 && uraianQuestions.length === 0) {
-                     formError.textContent = "Tidak ada soal yang ditemukan/tersisa setelah menerapkan pengaturan.";
-                     formErrorDetail.textContent = `Header yang terbaca dari CSV: ${allPilihanGandaQuestions.length > 0 ? 'OK' : 'Gagal membaca kolom Soal'}. Coba periksa nama kolom di Spreadsheet.`;
-                     formErrorContainer.classList.remove('hidden');
-                     throw new Error("No questions available after config");
+                    formError.textContent = "Tidak ada soal yang ditemukan setelah menerapkan pengaturan.";
+                    formErrorDetail.textContent =
+                        `Header terbaca: ${allPilihanGandaQuestions.length > 0 ? 'OK' : 'Gagal membaca kolom Soal'}. Periksa nama kolom di Spreadsheet.`;
+                    formErrorContainer.classList.remove('hidden');
+                    throw new Error("No questions available");
                 }
-                
-                readyMessage.textContent = `Soal telah berhasil dimuat (${pilihanGandaQuestions.length + uraianQuestions.length} soal). ${quizConfig.useTimer ? `Waktu pengerjaan ${quizConfig.timerDuration} menit.` : ''} Klik tombol di bawah untuk memulai.`;
+
+                readyMessage.textContent =
+                    `Soal berhasil dimuat (${pilihanGandaQuestions.length + uraianQuestions.length} soal). ${quizConfig.useTimer ? `Waktu pengerjaan ${quizConfig.timerDuration} menit.` : ''} Klik tombol di bawah untuk memulai.`;
                 startScreen.classList.add('hidden');
                 readyScreen.classList.remove('hidden');
 
             } catch (error) {
-                console.error("Error starting quiz:", error);
-                // Form error is already set in logic above for specific cases
+                console.error('Start quiz error:', error);
                 if (formError.textContent === "Harap pilih Kelas dan Nama!") {
-                     formError.textContent = "Gagal memuat soal kuis. Silakan coba lagi.";
-                     formErrorContainer.classList.remove('hidden');
+                    formError.textContent = "Gagal memuat soal kuis. Silakan coba lagi.";
+                    formErrorContainer.classList.remove('hidden');
                 }
             } finally {
-                 if (isCodeVerified && !(await checkExistingAttempt())) {
-                     startBtn.disabled = false;
+                if (isCodeVerified && !(await checkExistingAttempt())) {
+                    startBtn.disabled = false;
                 }
                 startBtn.innerHTML = 'Mulai Kuis';
             }
         }
-        
+
+        // ============================================================
+        // MULAI SESI KUIS
+        // ============================================================
         async function beginQuizSession() {
             enterFullscreen();
             isQuizActive = true;
-            createWatermark(); // Show Watermark
+            createWatermark();
             readyScreen.classList.add('hidden');
             quizContent.classList.remove('hidden');
-            
+
             currentQuizSection = pilihanGandaQuestions.length > 0 ? 'pilihanGanda' : 'uraian';
-            
+
             try {
                 await db.collection('quiz_sessions').doc(studentId).set({
                     name: studentName,
                     class: studentClass,
                     status: 'Mengerjakan',
-                    progress: '0/' + (pilihanGandaQuestions.length + uraianQuestions.length) 
+                    progress: '0/' + (pilihanGandaQuestions.length + uraianQuestions.length)
                 });
-                console.log("Quiz session created/set for", studentId);
 
-                 if (quizConfig.useTimer && quizConfig.timerDuration > 0) {
-                     startQuizTimer(quizConfig.timerDuration);
-                 } else {
-                     timerDisplay.classList.add('hidden');
-                 }
-                
-                 listenForceEndSignal();
-                showQuestion(); 
+                if (quizConfig.useTimer && quizConfig.timerDuration > 0) {
+                    startQuizTimer(quizConfig.timerDuration);
+                } else {
+                    timerDisplay.classList.add('hidden');
+                }
+
+                listenForceEndSignal();
+                showQuestion();
             } catch (error) {
-                console.error("Gagal memulai sesi di Firestore:", error);
-                 alert("Gagal memulai sesi kuis. Silakan coba lagi.");
-                 initQuiz(); 
+                console.error('Gagal memulai sesi:', error);
+                alert('Gagal memulai sesi kuis. Silakan coba lagi.');
+                initQuiz();
             }
         }
 
+        // ============================================================
+        // UPDATE PROGRES
+        // ============================================================
         async function updateQuizProgress() {
-            if (!isQuizActive || !studentId) return; 
-            const totalQuestions = pilihanGandaQuestions.length + uraianQuestions.length;
-            const currentDisplayIndex = currentQuizSection === 'pilihanGanda' ? currentQuestionIndex + 1 : pilihanGandaQuestions.length + currentQuestionIndex + 1;
-            const progressDisplay = `${currentDisplayIndex}/${totalQuestions}`; 
-
+            if (!isQuizActive || !studentId) return;
+            const total = pilihanGandaQuestions.length + uraianQuestions.length;
+            const displayIdx = currentQuizSection === 'pilihanGanda' ?
+                currentQuestionIndex + 1 :
+                pilihanGandaQuestions.length + currentQuestionIndex + 1;
             try {
                 await db.collection('quiz_sessions').doc(studentId).set({
-                    progress: progressDisplay 
+                    progress: `${displayIdx}/${total}`
                 }, { merge: true });
-            } catch (error) {
-                console.error("Gagal mengupdate progres:", error);
-            }
+            } catch (_) { /* ignore */ }
         }
 
-
+        // ============================================================
+        // TAMPILKAN SOAL
+        // ============================================================
         function showQuestion() {
-            nextBtn.disabled = true; 
-            currentSelectedAnswers = []; // Reset for new question
-            
+            nextBtn.disabled = true;
+            currentSelectedAnswers = [];
+
             const currentQuestions = currentQuizSection === 'pilihanGanda' ? pilihanGandaQuestions : uraianQuestions;
-             if (currentQuestionIndex >= currentQuestions.length) {
-                 console.warn("Attempted to show question with invalid index.");
-                 showResults(); 
-                 return;
-             }
+            if (currentQuestionIndex >= currentQuestions.length) {
+                showResults();
+                return;
+            }
             const currentQuestion = currentQuestions[currentQuestionIndex];
 
+            // Gambar
             if (currentQuestion.linkGambar) {
                 questionImage.src = currentQuestion.linkGambar;
                 questionImage.classList.remove('hidden');
             } else {
                 questionImage.classList.add('hidden');
             }
-            questionText.textContent = currentQuestion.question;
-            
-            // Hint for MCMA
+
+            // Teks soal — gunakan innerHTML agar LaTeX bisa dirender
+            questionText.innerHTML = currentQuestion.question;
+
+            // Hint MCMA
             if (currentQuestion.isMCMA) {
                 mcmaHint.classList.remove('hidden');
             } else {
                 mcmaHint.classList.add('hidden');
             }
-            
-            const totalQuestions = pilihanGandaQuestions.length + uraianQuestions.length;
-            const currentDisplayIndex = currentQuizSection === 'pilihanGanda' ? currentQuestionIndex + 1 : pilihanGandaQuestions.length + currentQuestionIndex + 1;
-            progressText.textContent = `Soal ${currentDisplayIndex} dari ${totalQuestions}`;
 
-            // --- Logika Tombol Selesai ---
-            const isLastPgQuestion = currentQuizSection === 'pilihanGanda' && currentQuestionIndex === pilihanGandaQuestions.length - 1;
-            const isLastUrQuestion = currentQuizSection === 'uraian' && currentQuestionIndex === uraianQuestions.length - 1;
-            const hasUrQuestions = uraianQuestions.length > 0;
+            const total = pilihanGandaQuestions.length + uraianQuestions.length;
+            const displayIdx = currentQuizSection === 'pilihanGanda' ?
+                currentQuestionIndex + 1 :
+                pilihanGandaQuestions.length + currentQuestionIndex + 1;
+            progressText.textContent = `Soal ${displayIdx} dari ${total}`;
 
-            if ((isLastPgQuestion && !hasUrQuestions) || isLastUrQuestion) {
+            // Tombol "Selesaikan"
+            const isLastPg = currentQuizSection === 'pilihanGanda' && currentQuestionIndex === pilihanGandaQuestions.length - 1;
+            const isLastUr = currentQuizSection === 'uraian' && currentQuestionIndex === uraianQuestions.length - 1;
+            const hasUr = uraianQuestions.length > 0;
+
+            if ((isLastPg && !hasUr) || isLastUr) {
                 nextBtn.textContent = 'Selesaikan Kuis';
             } else {
                 nextBtn.textContent = 'Soal Berikutnya';
             }
 
+            // Render section
             if (currentQuizSection === 'pilihanGanda') {
-                quizTitle.textContent = "Bagian Pilihan Ganda";
+                quizTitle.textContent = 'Bagian Pilihan Ganda';
                 optionsContainer.classList.remove('hidden');
                 uraianAnswerArea.classList.add('hidden');
                 optionsContainer.innerHTML = '';
-                
-                // Mapping of index to letter for data retrieval
+
                 const labels = ['A', 'B', 'C', 'D', 'E'];
-                
                 currentQuestion.options.forEach((option, idx) => {
-                    const button = document.createElement('button');
-                    button.textContent = option;
-                    button.disabled = false; 
-                    button.dataset.label = labels[idx]; // Store label (A, B, etc)
-                    button.classList.add('option-btn', 'w-full', 'text-left', 'p-4', 'rounded-lg', 'border', 'border-gray-300', 'hover:bg-gray-100', 'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400', 'transition-colors');
-                    button.onclick = () => selectAnswer(button, labels[idx], currentQuestion.isMCMA); 
-                    optionsContainer.appendChild(button);
+                    const btn = document.createElement('button');
+                    // Gunakan innerHTML agar LaTeX di opsi bisa dirender
+                    btn.innerHTML = option;
+                    btn.disabled = false;
+                    btn.dataset.label = labels[idx];
+                    btn.classList.add(
+                        'option-btn', 'w-full', 'text-left', 'p-4', 'rounded-lg',
+                        'border', 'border-gray-300', 'hover:bg-gray-100',
+                        'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-400',
+                        'transition-colors'
+                    );
+                    btn.onclick = () => selectAnswer(btn, labels[idx], currentQuestion.isMCMA);
+                    optionsContainer.appendChild(btn);
                 });
-                 nextBtn.classList.remove('hidden'); 
+
+                // Render math di opsi (setelah DOM diisi)
+                renderMathInContainer(optionsContainer);
+
+                nextBtn.classList.remove('hidden');
             } else {
-                quizTitle.textContent = "Bagian Uraian";
+                quizTitle.textContent = 'Bagian Uraian';
                 optionsContainer.classList.add('hidden');
                 uraianAnswerArea.classList.remove('hidden');
                 document.getElementById('uraian-answer').value = '';
-                nextBtn.disabled = false; 
-                nextBtn.classList.remove('hidden'); 
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('hidden');
             }
-            updateQuizProgress(); 
+
+            // Render math di teks soal
+            renderMathInContainer(questionText);
+
+            updateQuizProgress();
         }
 
-        function selectAnswer(selectedButton, selectedLabel, isMCMA) {
+        // ============================================================
+        // PILIH JAWABAN
+        // ============================================================
+        function selectAnswer(btn, label, isMCMA) {
             if (isMCMA) {
-                // MCMA Logic (Toggle)
-                if (currentSelectedAnswers.includes(selectedLabel)) {
-                    // Deselect
-                    currentSelectedAnswers = currentSelectedAnswers.filter(l => l !== selectedLabel);
-                    selectedButton.classList.remove('selected-answer');
+                if (currentSelectedAnswers.includes(label)) {
+                    currentSelectedAnswers = currentSelectedAnswers.filter(l => l !== label);
+                    btn.classList.remove('selected-answer');
                 } else {
-                    // Select
-                    currentSelectedAnswers.push(selectedLabel);
-                    selectedButton.classList.add('selected-answer');
+                    currentSelectedAnswers.push(label);
+                    btn.classList.add('selected-answer');
                 }
-                
-                // Enable next button if at least one answer is selected
                 nextBtn.disabled = currentSelectedAnswers.length === 0;
-
             } else {
-                // Single Choice Logic (Replace)
-                 document.querySelectorAll('.option-btn.selected-answer').forEach(btn => {
-                     btn.classList.remove('selected-answer');
-                 });
-                 selectedButton.classList.add('selected-answer');
-                 currentSelectedAnswers = [selectedLabel]; 
-                 nextBtn.disabled = false; 
+                document.querySelectorAll('.option-btn.selected-answer').forEach(b => b.classList.remove('selected-answer'));
+                btn.classList.add('selected-answer');
+                currentSelectedAnswers = [label];
+                nextBtn.disabled = false;
             }
         }
-        
-        async function showResults() {
-             if (isSubmitting) return; 
-             isSubmitting = true; 
 
-             if (quizTimerInterval) clearInterval(quizTimerInterval); 
-             quizTimerInterval = null;
+        // ============================================================
+        // TAMPILKAN HASIL
+        // ============================================================
+        async function showResults() {
+            if (isSubmitting) return;
+            isSubmitting = true;
+
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
+            quizTimerInterval = null;
             if (countdownInterval) {
                 clearInterval(countdownInterval);
                 countdownInterval = null;
             }
-            
             if (sessionStatusUnsubscribe) {
-                 sessionStatusUnsubscribe();
-                 sessionStatusUnsubscribe = null;
+                sessionStatusUnsubscribe();
+                sessionStatusUnsubscribe = null;
             }
 
-            await recordAttempt(); 
-            
+            await recordAttempt();
+
             try {
-                 if (studentId) { 
+                if (studentId) {
                     await db.collection('quiz_sessions').doc(studentId).delete();
-                 }
-            } catch (error) {
-                console.error("Gagal menghapus sesi dari Firestore:", error);
-            }
+                }
+            } catch (_) { /* ignore */ }
 
-             isQuizActive = false;
-             watermarkContainer.classList.add('hidden'); // Hide watermark
-            
+            isQuizActive = false;
+            watermarkContainer.classList.add('hidden');
             focusWarningScreen.classList.add('hidden');
             quizContent.classList.add('hidden');
             confirmationScreen.classList.add('hidden');
-            
-            const totalPgQuestions = pilihanGandaQuestions.length;
-            const wrongAnswers = totalPgQuestions - score; 
-            const finalScoreValue = totalPgQuestions > 0 ? Math.round((score / totalPgQuestions) * 100) : 0; 
-            
-            correctCountEl.textContent = `${score}`; 
-            wrongCountEl.textContent = `${wrongAnswers}`; 
-            
+
+            const totalPg = pilihanGandaQuestions.length;
+            const wrong = totalPg - score;
+            correctCountEl.textContent = `${score}`;
+            wrongCountEl.textContent = `${wrong}`;
+
             resultsScreen.classList.remove('hidden');
-            
-            savePgResults(finalScoreValue).then(() => { 
+
+            const finalScore = totalPg > 0 ? Math.round((score / totalPg) * 100) : 0;
+            savePgResults(finalScore).then(() => {
                 if (uraianAnswers.length > 0) {
                     saveUraianResults();
                 }
             });
         }
 
+        // ============================================================
+        // SIMPAN HASIL
+        // ============================================================
         function savePgResults(finalScoreValue) {
             savingStatusPg.innerHTML = '<div class="loader"></div> Menyimpan hasil Pilihan Ganda...';
-            const formData = new FormData();
-            formData.append('targetSheet', 'Jawaban');
-            formData.append('Timestamp', new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }));
-            formData.append('Nama', studentName);
-            formData.append('Kelas', studentClass);
-            formData.append('Jawaban_Benar', score); 
-            formData.append('Total_Soal', pilihanGandaQuestions.length);
-            formData.append('Nomor_soal_dikerjakan', pilihanGandaQuestions.map(q => q.no).join(','));
-            formData.append('Skor', finalScoreValue); 
+            const fd = new FormData();
+            fd.append('targetSheet', 'Jawaban');
+            fd.append('Timestamp', new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }));
+            fd.append('Nama', studentName);
+            fd.append('Kelas', studentClass);
+            fd.append('Jawaban_Benar', score);
+            fd.append('Total_Soal', pilihanGandaQuestions.length);
+            fd.append('Nomor_soal_dikerjakan', pilihanGandaQuestions.map(q => q.no).join(','));
+            fd.append('Skor', finalScoreValue);
 
-            return fetch(SCRIPT_URL, { method: 'POST', body: formData })
-            .then(response => response.json())
-            .then(data => {
-                if (data.result === 'success') {
-                    savingStatusPg.textContent = "Hasil Pilihan Ganda berhasil disimpan!";
-                    savingStatusPg.style.color = 'green';
-                } else { throw new Error(data.message || 'Unknown error'); }
-            })
-            .catch(error => {
-                console.error('Error saving PG results:', error);
-                savingStatusPg.textContent = "Gagal menyimpan hasil Pilihan Ganda.";
-                savingStatusPg.style.color = 'red';
-            });
+            return fetch(SCRIPT_URL, { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.result === 'success') {
+                        savingStatusPg.textContent = 'Hasil Pilihan Ganda berhasil disimpan!';
+                        savingStatusPg.style.color = 'green';
+                    } else throw new Error(d.message || 'Unknown error');
+                })
+                .catch(e => {
+                    console.error('Save PG error:', e);
+                    savingStatusPg.textContent = 'Gagal menyimpan hasil Pilihan Ganda.';
+                    savingStatusPg.style.color = 'red';
+                });
         }
 
         function saveUraianResults() {
             savingStatusUraian.innerHTML = '<div class="loader"></div> Menyimpan hasil Uraian...';
-            const formData = new FormData();
-            formData.append('targetSheet', 'Jawaban_Uraian');
-            formData.append('Timestamp', new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }));
-            formData.append('Nama', studentName);
-            formData.append('Kelas', studentClass);
-            formData.append('Jawaban', JSON.stringify(uraianAnswers)); 
-            formData.append('Total_Soal', uraianQuestions.length);
-            formData.append('Nomor_soal_dikerjakan', uraianQuestions.map(q => q.no).join(','));
+            const fd = new FormData();
+            fd.append('targetSheet', 'Jawaban_Uraian');
+            fd.append('Timestamp', new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }));
+            fd.append('Nama', studentName);
+            fd.append('Kelas', studentClass);
+            fd.append('Jawaban', JSON.stringify(uraianAnswers));
+            fd.append('Total_Soal', uraianQuestions.length);
+            fd.append('Nomor_soal_dikerjakan', uraianQuestions.map(q => q.no).join(','));
 
-            return fetch(SCRIPT_URL, { method: 'POST', body: formData })
-            .then(response => response.json())
-            .then(data => {
-                if (data.result === 'success') {
-                    savingStatusUraian.textContent = "Hasil Uraian berhasil disimpan!";
-                    savingStatusUraian.style.color = 'green';
-                } else { throw new Error(data.message || 'Unknown error'); }
-            })
-            .catch(error => {
-                console.error('Error saving Uraian results:', error);
-                savingStatusUraian.textContent = "Gagal menyimpan hasil Uraian.";
-                savingStatusUraian.style.color = 'red';
-            });
+            return fetch(SCRIPT_URL, { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.result === 'success') {
+                        savingStatusUraian.textContent = 'Hasil Uraian berhasil disimpan!';
+                        savingStatusUraian.style.color = 'green';
+                    } else throw new Error(d.message || 'Unknown error');
+                })
+                .catch(e => {
+                    console.error('Save Uraian error:', e);
+                    savingStatusUraian.textContent = 'Gagal menyimpan hasil Uraian.';
+                    savingStatusUraian.style.color = 'red';
+                });
         }
 
-        // --- Event Listeners ---
+        // ============================================================
+        // EVENT LISTENERS
+        // ============================================================
         studentClassSelect.addEventListener('change', (e) => {
-             studentClass = e.target.value;
-             accessCodeInput.value = '';
-             codeError.classList.add('hidden');
-             nameSection.classList.add('hidden');
-             studentNameSelect.disabled = true;
-             startBtn.disabled = true;
-             isCodeVerified = false;
-            
-             if (studentClass) {
-                 accessCodeSection.classList.remove('hidden');
-                 verifyCodeBtn.disabled = false; 
-             } else {
-                 accessCodeSection.classList.add('hidden');
-             }
-             populateNameDropdown(''); 
+            studentClass = e.target.value;
+            accessCodeInput.value = '';
+            codeError.classList.add('hidden');
+            nameSection.classList.add('hidden');
+            studentNameSelect.disabled = true;
+            startBtn.disabled = true;
+            isCodeVerified = false;
+            if (studentClass) {
+                accessCodeSection.classList.remove('hidden');
+                verifyCodeBtn.disabled = false;
+            } else {
+                accessCodeSection.classList.add('hidden');
+            }
+            populateNameDropdown('');
         });
 
         verifyCodeBtn.addEventListener('click', () => {
-             const enteredCode = accessCodeInput.value.trim();
-             const correctCode = accessCodes[studentClass];
-             
-             if (enteredCode && correctCode && enteredCode === correctCode) {
-                 isCodeVerified = true;
-                 codeError.classList.add('hidden');
-                 accessCodeSection.classList.add('hidden'); 
-                 nameSection.classList.remove('hidden'); 
-                 populateNameDropdown(studentClass); 
-             } else {
-                 isCodeVerified = false;
-                 codeError.classList.remove('hidden');
-                 nameSection.classList.add('hidden'); 
-                 studentNameSelect.disabled = true;
-                 startBtn.disabled = true;
-             }
+            const entered = accessCodeInput.value.trim();
+            const correct = accessCodes[studentClass];
+            if (entered && correct && entered === correct) {
+                isCodeVerified = true;
+                codeError.classList.add('hidden');
+                accessCodeSection.classList.add('hidden');
+                nameSection.classList.remove('hidden');
+                populateNameDropdown(studentClass);
+            } else {
+                isCodeVerified = false;
+                codeError.classList.remove('hidden');
+                nameSection.classList.add('hidden');
+                studentNameSelect.disabled = true;
+                startBtn.disabled = true;
+            }
         });
 
-        studentNameSelect.addEventListener('change', async (e) => { 
-             studentName = e.target.value;
-             if (studentClass && studentName) {
-                 studentId = `${studentClass}_${studentName}`.replace(/\s+/g, '_');
-                 const hasAttempted = await checkExistingAttempt();
-                 if (hasAttempted) {
-                     attemptError.classList.remove('hidden');
-                     startBtn.disabled = true;
-                 } else {
-                     attemptError.classList.add('hidden');
-                     startBtn.disabled = false; 
-                 }
-             } else {
-                 attemptError.classList.add('hidden');
-                 startBtn.disabled = true; 
-             }
+        studentNameSelect.addEventListener('change', async (e) => {
+            studentName = e.target.value;
+            if (studentClass && studentName) {
+                studentId = `${studentClass}_${studentName}`.replace(/\s+/g, '_');
+                const has = await checkExistingAttempt();
+                if (has) {
+                    attemptError.classList.remove('hidden');
+                    startBtn.disabled = true;
+                } else {
+                    attemptError.classList.add('hidden');
+                    startBtn.disabled = false;
+                }
+            } else {
+                attemptError.classList.add('hidden');
+                startBtn.disabled = true;
+            }
         });
 
         startBtn.addEventListener('click', startQuiz);
         startFullscreenBtn.addEventListener('click', beginQuizSession);
 
         nextBtn.addEventListener('click', () => {
-             if (currentQuizSection === 'pilihanGanda') {
-                 if (currentSelectedAnswers.length > 0) {
-                     const currentQuestion = pilihanGandaQuestions[currentQuestionIndex];
-                     const selectedSet = new Set(currentSelectedAnswers);
-                     const correctSet = new Set(currentQuestion.correctKeys);
-
-                     let isCorrect = false;
-                     if (selectedSet.size === correctSet.size) {
-                         isCorrect = [...selectedSet].every(value => correctSet.has(value));
-                     }
-                     
-                     if (isCorrect) {
-                         score++; 
-                     }
-                 }
-             } else if (currentQuizSection === 'uraian') {
-                 const answer = document.getElementById('uraian-answer').value;
-                 uraianAnswers.push({ no: uraianQuestions[currentQuestionIndex].no, answer: answer });
-             }
+            if (currentQuizSection === 'pilihanGanda') {
+                if (currentSelectedAnswers.length > 0) {
+                    const q = pilihanGandaQuestions[currentQuestionIndex];
+                    const sel = new Set(currentSelectedAnswers);
+                    const corr = new Set(q.correctKeys);
+                    let correct = false;
+                    if (sel.size === corr.size) {
+                        correct = [...sel].every(v => corr.has(v));
+                    }
+                    if (correct) score++;
+                }
+            } else {
+                const answer = document.getElementById('uraian-answer').value;
+                uraianAnswers.push({ no: uraianQuestions[currentQuestionIndex].no, answer: answer });
+            }
 
             if (nextBtn.textContent === 'Selesaikan Kuis') {
-                 showResults();
-                 return; 
-             }
+                showResults();
+                return;
+            }
 
             currentQuestionIndex++;
             const currentQuestions = currentQuizSection === 'pilihanGanda' ? pilihanGandaQuestions : uraianQuestions;
             if (currentQuestionIndex < currentQuestions.length) {
                 showQuestion();
-            } else { 
+            } else {
                 if (currentQuizSection === 'pilihanGanda' && uraianQuestions.length > 0) {
                     quizContent.classList.add('hidden');
                     confirmationScreen.classList.remove('hidden');
                 } else {
-                    showResults(); 
+                    showResults();
                 }
             }
         });
-        
+
         continueUraianBtn.addEventListener('click', () => {
             currentQuizSection = 'uraian';
             currentQuestionIndex = 0;
@@ -1204,34 +1295,40 @@
 
         finishEarlyBtn.addEventListener('click', showResults);
         restartBtn.addEventListener('click', initQuiz);
+
         resumeQuizBtn.addEventListener('click', async () => {
             clearInterval(countdownInterval);
             countdownInterval = null;
             focusWarningScreen.classList.add('hidden');
             enterFullscreen();
-             try { 
-                 await db.collection('quiz_sessions').doc(studentId).set({ status: 'Mengerjakan' }, { merge: true });
-             } catch (error) {
-                  console.error("Gagal mengupdate status siswa:", error);
-             }
+            try {
+                await db.collection('quiz_sessions').doc(studentId).set({ status: 'Mengerjakan' }, { merge: true });
+            } catch (_) { /* ignore */ }
         });
 
-        // --- Init App ---
+        // ============================================================
+        // INIT APLIKASI
+        // ============================================================
         async function initializeApp() {
             try {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 await firebase.auth().signInAnonymously();
-                console.log("Firebase Authenticated Anonymously");
-                
-                await fetchInitialData(); 
-                
+                console.log('Firebase authenticated');
+
+                await fetchInitialData();
+
                 document.addEventListener('visibilitychange', handleVisibilityChange);
                 document.addEventListener('fullscreenchange', handleFullscreenChange);
 
-            } catch(e) {
-                console.error("Firebase Initialization Error:", e);
-                document.body.innerHTML = `<div class="p-8 text-center text-red-600">Gagal menginisialisasi aplikasi. Periksa konfigurasi Firebase Anda.<br><small>${e.message}</small></div>`;
+                // Pastikan KaTeX auto-render tersedia
+                if (typeof renderMathInElement !== 'function') {
+                    console.warn('KaTeX auto-render belum siap, akan dicoba ulang nanti.');
+                }
+            } catch (e) {
+                console.error('Firebase init error:', e);
+                document.body.innerHTML =
+                    `<div class="p-8 text-center text-red-600">Gagal menginisialisasi aplikasi.<br><small>${e.message}</small></div>`;
             }
         }
 
